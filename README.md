@@ -48,7 +48,7 @@ cd path\to\training-pre-training-yolov8
    - **http://bdd-data.berkeley.edu/download.html**
 2. Download:
    - **100K Images** – detection frames (train/val splits). Unzip so you have folders like `100k/train/` and `100k/val/` full of images.
-   - **Detection labels** – JSON annotations for object detection (e.g. one big JSON per split, or per-image JSONs, depending on the release).
+   - **Labels** – JSON annotations for object detection (e.g. one big JSON per split, or per-image JSONs, depending on the release).
 3. Place everything under one folder (e.g. `downloads/` in the project, or any path you set as `BDD_ROOT`). The scripts expect this layout:
    - **Images:** `bdd100k_images_100k/100k/train/` and `bdd100k_images_100k/100k/val/`
    - **Labels:** either `bdd100k_labels/100k/train/` and `.../val/` (per-image `.json`) or `bdd100k_labels/det_20/bdd100k_labels_images_train.json` and `bdd100k_labels_images_val.json`
