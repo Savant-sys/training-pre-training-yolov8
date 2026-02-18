@@ -6,10 +6,11 @@ Train a YOLO object detection model on your own dataset (e.g. BDD100K), then com
 
 ## What This Project Does
 
-1. **Setup** – Download a pretrained YOLO model (e.g. YOLOv8n) and back it up.
-2. **Train** – Fine-tune the model on your dataset (e.g. BDD100K driving classes).
-3. **Compare** – Run a video through both the pretrained and your trained model and save two MP4s side by side.
-4. **Continue training** – Use your `best.pt` as the starting point for a second dataset (no restart from scratch).
+1. **Setup dataset** – Convert BDD100K-style label JSON to YOLO `.txt` format, then arrange images into `bdd100k_yolo/`.
+2. **Setup YOLO model** – Download a pretrained YOLO model (e.g. YOLOv8n) and back it up.
+3. **Train** – Fine-tune the model on your dataset (e.g. BDD100K driving classes).
+4. **Compare** – Run a video through both the pretrained and your trained model and save two MP4s side by side.
+5. **Continue training** – Use your `best.pt` as the starting point for a second dataset (no restart from scratch).
 
 ---
 
@@ -31,7 +32,7 @@ pip install ultralytics opencv-python numpy
 
 ## Step-by-Step
 
-### Step 1: Get the project and go to the project folder
+### Step 1: Open the project folder
 
 ```bash
 cd path\to\training-pre-training-yolov8
@@ -39,11 +40,59 @@ cd path\to\training-pre-training-yolov8
 
 ---
 
-### Step 2: Download the pretrained model (first time only)
+### Step 2: Setup dataset (convert JSON → YOLO .txt, then arrange images)
 
-This downloads a pretrained model to the project root and backs it up to `backup/`.
+Your raw BDD100K data has **images** and **label JSON** (one big JSON or per-image JSONs). YOLO needs **one `.txt` per image** with lines like `class_id x_center y_center width height` (normalized 0–1). This step converts the labels and sets up the folder structure.
 
-**Option A – Script (downloads YOLOv8n):**
+**2a. Convert label JSON to YOLO .txt**
+
+From the **project root**, run:
+
+```bash
+python setup_dataset/convert_labels_to_yolo.py
+```
+
+- The script looks for BDD100K under the folder in the `BDD_ROOT` environment variable, or `downloads/` if not set.
+- Expected layout:
+  - **Images:** `bdd100k_images_100k/100k/train/` and `.../val/`
+  - **Labels (one of):**
+    - Per-image JSON: `bdd100k_labels/100k/train/` and `.../val/` (e.g. `0000f77c-6257be58.json`)
+    - Or one big JSON: `bdd100k_labels/det_20/bdd100k_labels_images_train.json` and `..._val.json`
+- It writes **YOLO-format .txt** files to `bdd100k_yolo/labels/train/` and `bdd100k_yolo/labels/val/` (one `.txt` per image, same stem as the image filename).
+- Classes are mapped to the 10 BDD100K detection classes: pedestrian, rider, car, truck, bus, train, motorcycle, bicycle, traffic light, traffic sign.
+
+If your data is elsewhere, set the root before running:
+
+```bash
+set BDD_ROOT=C:\path\to\your\bdd100k_folder
+python setup_dataset/convert_labels_to_yolo.py
+```
+
+**2b. Copy/link images into the YOLO dataset folder**
+
+```bash
+python setup_dataset/setup_dataset.py
+```
+
+- This fills `bdd100k_yolo/images/train/` and `bdd100k_yolo/images/val/` from your BDD100K images (copy on Windows; can use symlinks on Linux/Mac).
+- Uses the same `BDD_ROOT` (or `downloads/`). Image filenames must match the label stems from step 2a.
+
+After 2a and 2b you have:
+
+```
+bdd100k_yolo/
+  images/train/   images/val/
+  labels/train/   labels/val/   (from convert_labels_to_yolo.py)
+  data.yaml       (already in repo)
+```
+
+**Using a different dataset (already in YOLO format):** If you have images and `.txt` labels in YOLO format elsewhere, create a `data.yaml` (path, train/val dirs, `nc`, `names`) and skip steps 2a–2b. Then continue from Step 3.
+
+---
+
+### Step 3: Setup YOLO model (download pretrained weights)
+
+Download a pretrained model to the project root and back it up to `backup/`.
 
 ```bash
 python setup_yolo_model.py
@@ -53,33 +102,7 @@ You should see:
 - `yolov8n.pt` in the project root
 - A copy in `backup/yolov8n.pt`
 
-**Option B – Use another model (e.g. YOLO26n):**
-
-If you use a model name like `yolo26n.pt` in training or comparison, Ultralytics will download it on first use. No extra step needed.
-
----
-
-### Step 3: Prepare your dataset in YOLO format
-
-Your data must be in YOLO format:
-
-- **Images** in folders (e.g. `bdd100k_yolo/images/train/`, `bdd100k_yolo/images/val/`).
-- **Labels** – one `.txt` per image, same name as the image, in `labels/train/` and `labels/val/`. Each line: `class_id x_center y_center width height` (normalized 0–1).
-
-Example layout:
-
-```
-bdd100k_yolo/
-  data.yaml          # dataset config (path, train/val, nc, names)
-  images/
-    train/           # training images
-    val/             # validation images
-  labels/
-    train/           # .txt per image
-    val/
-```
-
-The project includes `bdd100k_yolo/data.yaml` for the BDD100K driving dataset (10 classes: pedestrian, rider, car, truck, bus, train, motorcycle, bicycle, traffic light, traffic sign). Replace paths and class names in `data.yaml` if you use a different dataset.
+To use another model (e.g. YOLO26n), use `model=yolo26n.pt` when training or comparing; Ultralytics will download it on first use.
 
 ---
 
@@ -169,21 +192,24 @@ You can keep improving from your current weights instead of starting over:
 ```
 training-pre-training-yolov8/
   README.md                 # This file
-  setup_yolo_model.py       # Download pretrained model + backup
+  setup_yolo_model.py       # Step 3: download pretrained model + backup
+  setup_dataset/
+    convert_labels_to_yolo.py   # Step 2a: JSON → YOLO .txt labels
+    setup_dataset.py            # Step 2b: copy/link images into bdd100k_yolo
   train_bdd100k.bat         # Windows: run training (tuned for RAM/GPU)
   train_bdd100k.sh          # Bash: same training
   compare_models_video.py   # Compare pretrained vs trained on video → MP4
   bdd100k_yolo/
     data.yaml               # Dataset config (path, classes)
-    images/train, val
-    labels/train, val
+    images/train, val       # from setup_dataset.py
+    labels/train, val       # from convert_labels_to_yolo.py
   runs/detect/train/        # Training outputs
     weights/best.pt         # Best weights (use for inference or next training)
     weights/last.pt
   comparison_output/        # compare_models_video.py output
     pretrained/             # Video from pretrained model
     trained/                # Video from your best.pt
-  backup/                   # Backup of pretrained model (from setup)
+  backup/                   # Backup of pretrained model (from setup_yolo_model.py)
   .gitignore                # Ignores large files (models, data, videos)
 ```
 
@@ -198,12 +224,14 @@ training-pre-training-yolov8/
 
 ---
 
-## Quick reference
+## Quick reference (order to run)
 
-| Goal                    | Command / action |
-|-------------------------|-------------------|
-| Download pretrained     | `python setup_yolo_model.py` |
-| Train (first time)      | `train_bdd100k.bat` or `yolo detect train model=yolov8n.pt data=bdd100k_yolo/data.yaml epochs=100 imgsz=640 batch=64 workers=4` |
-| Compare on video        | `python compare_models_video.py your_video.mov` |
-| Compare pretrained only | `python compare_models_video.py your_video.mov --pretrained-only` |
-| Train on 2nd dataset    | `yolo detect train model=runs/detect/train/weights/best.pt data=second_data.yaml project=runs/detect name=train_dataset2 epochs=100 ...` |
+| Step | Goal                    | Command / action |
+|------|-------------------------|-------------------|
+| 2a   | Convert JSON → YOLO .txt| `python setup_dataset/convert_labels_to_yolo.py` |
+| 2b   | Setup dataset images    | `python setup_dataset/setup_dataset.py` |
+| 3    | Download pretrained     | `python setup_yolo_model.py` |
+| 4    | Train (first time)      | `train_bdd100k.bat` or `yolo detect train model=yolov8n.pt data=bdd100k_yolo/data.yaml epochs=100 imgsz=640 batch=64 workers=4` |
+| 5    | Compare on video        | `python compare_models_video.py your_video.mov` |
+| 5    | Compare pretrained only | `python compare_models_video.py your_video.mov --pretrained-only` |
+| 6    | Train on 2nd dataset    | `yolo detect train model=runs/detect/train/weights/best.pt data=second_data.yaml project=runs/detect name=train_dataset2 epochs=100 ...` |
