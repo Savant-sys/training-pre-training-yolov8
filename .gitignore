@@ -1,0 +1,55 @@
+# Large files & storage – keep locally, don't push to GitHub
+backup/
+bdd100k_yolo/
+raw datasets/
+no need/
+setup_dataset/
+
+# Model weights (often large)
+*.pt
+*.pth
+*.onnx
+*.weights
+
+# Videos & media
+*.mov
+*.mp4
+*.avi
+*.mkv
+
+# Datasets & data
+*.zip
+*.tar
+*.tar.gz
+*.rar
+data/
+datasets/
+runs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+.eggs/
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Env files (secrets)
+.env
+.env.local
+*.env
