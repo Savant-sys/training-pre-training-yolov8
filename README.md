@@ -40,9 +40,20 @@ cd path\to\training-pre-training-yolov8
 
 ---
 
-### Step 2: Setup dataset (convert JSON → YOLO .txt, then arrange images)
+### Step 2: Setup dataset (download BDD100K → convert JSON to YOLO .txt → arrange images)
 
-Your raw BDD100K data has **images** and **label JSON** (one big JSON or per-image JSONs). YOLO needs **one `.txt` per image** with lines like `class_id x_center y_center width height` (normalized 0–1). This step converts the labels and sets up the folder structure.
+**Download 100k images and labels from BDD100K**
+
+1. Go to the official BDD100K download page and accept the license:
+   - **https://bdd-data.berkeley.edu/portal.html** (register/login) or **https://doc.bdd100k.com/download.html**
+2. Download:
+   - **100K Images** – detection frames (train/val splits). Unzip so you have folders like `100k/train/` and `100k/val/` full of images.
+   - **Detection labels** – JSON annotations for object detection (e.g. one big JSON per split, or per-image JSONs, depending on the release).
+3. Place everything under one folder (e.g. `downloads/` in the project, or any path you set as `BDD_ROOT`). The scripts expect this layout:
+   - **Images:** `bdd100k_images_100k/100k/train/` and `bdd100k_images_100k/100k/val/`
+   - **Labels:** either `bdd100k_labels/100k/train/` and `.../val/` (per-image `.json`) or `bdd100k_labels/det_20/bdd100k_labels_images_train.json` and `bdd100k_labels_images_val.json`
+
+If you use a different folder, set `BDD_ROOT` before running the scripts (see 2a).
 
 **2a. Convert label JSON to YOLO .txt**
 
@@ -228,6 +239,7 @@ training-pre-training-yolov8/
 
 | Step | Goal                    | Command / action |
 |------|-------------------------|-------------------|
+| 2    | Download BDD100K       | Get [100K images](https://bdd-data.berkeley.edu/portal.html) + [detection labels](https://doc.bdd100k.com/download.html); put under `downloads/` or set `BDD_ROOT` |
 | 2a   | Convert JSON → YOLO .txt| `python setup_dataset/convert_labels_to_yolo.py` |
 | 2b   | Setup dataset images    | `python setup_dataset/setup_dataset.py` |
 | 3    | Download pretrained     | `python setup_yolo_model.py` |
