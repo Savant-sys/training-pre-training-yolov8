@@ -45,7 +45,7 @@ cd path\to\training-pre-training-yolov8
 **Download 100k images and labels from BDD100K**
 
 1. Go to the official BDD100K download page and accept the license:
-   - **https://bdd-data.berkeley.edu/portal.html** (register/login) or **https://doc.bdd100k.com/download.html**
+   - **http://bdd-data.berkeley.edu/download.html**
 2. Download:
    - **100K Images** – detection frames (train/val splits). Unzip so you have folders like `100k/train/` and `100k/val/` full of images.
    - **Detection labels** – JSON annotations for object detection (e.g. one big JSON per split, or per-image JSONs, depending on the release).
